@@ -1,0 +1,316 @@
+Cobra (lightning talk)
+Go 1.8 Release Party (Gophers Murcia)
+16 Feb 2017
+Tags: foo, bar, baz
+
+Daniel Vigueras
+CTO, Doalitic
+dvigueras@doalitic.com
+https://doalitic.com/
+@danielvigueras
+
+
+
+* Cobra
+.image img/cobra.png _ 640
+- Creada por Steve Francia (Google) en septiembre de 2013
+.image img/stevefrancia.jpeg _ 250
+
+
+
+* Características
+
+- Permite crear aplicaciones de consola (CLIs)
+- Escrita en Go
+- Interfaz sencilla
+
+Se puede usar de dos maneras
+
+- Librería
+- Utilidad de generación automática de código
+
+
+* Motivación (i)
+
+.image img/moss.png _ 750
+
+	$ moss servers list --project=myproject
+
+	NAME     PROJECT      SSH KEY               HOST            CREATED
+	myvps    myproject    daniel@mbpro.local    81.23.125.64    30/11/2016 15:51
+
+	$ moss domains list --project=myproject
+
+	DOMAIN           SERVER    TYPE           HEALTH    CREATED
+	myblog.com       myvps     HTML/CSS       OK        30/11/2016 16:05
+	api.myapp.com    myvps     PHP/Laravel    OK        30/11/2016 17:22
+
+* Motivación (ii)
+
+	$ moss sites deploy --project=myproject --domain=api.myapp.com
+
+	Deploying api.myapp.com...
+
+	Loading composer repositories with package information
+	Installing dependencies (including require-dev) from lock file
+	  - Installing guzzlehttp/promises (v1.3.1)
+	    Loading from cache
+
+	  - Installing symfony/var-dumper (v2.7.23)
+	    Loading from cache
+
+	    ....
+
+	Generating autoload files
+	> php artisan clear-compiled
+	> php artisan optimize
+	Generating optimized class loader
+	Compiling common classes
+
+
+	api.myapp.com deployed successfully
+
+
+
+* Funcionalidades
+
+- Comandos (con soporte de anidación)
+- Flags
+- Generación automática de código
+- Sugerencias
+- Generación automática de la ayuda
+- Autogeneración de bash completion
+- Autogeneración de páginas de manual (_man_)
+
+
+
+* Comandos: estructura
+
+- Elemento más importante
+
+	app version
+
+- Interesante generarlos automáticamente
+
+- Instalar cobra
+
+	$ go install github.com/spf13/cobra/cobra
+
+- Generar proyecto
+
+	$ cobra init github.com/doalitic/moss
+
+- Añadir un nuevo comando
+
+	$ cd $GOPATH/src/github.com/doalitic/moss
+	$ cobra add login
+
+
+
+* Comandos: generación automática (i)
+
+- Generará el comando raíz (_cmd/root.go_)
+
+.code code/root_1.go /START ROOTCMD OMIT/,/END ROOTCMD OMIT/
+
+- Y la función que lo ejecuta (invocada a su vez desde _main_)
+
+.code code/root_1.go /START EXECUTE OMIT/,/END EXECUTE OMIT/
+
+
+
+* Comandos: generación automática (ii)
+
+- Además generará el propio comando en (_cmd/login.go_)
+
+.code code/login_1.go /START OMIT/,/END OMIT/
+
+
+
+* Comandos: generación automática (iii)
+
+- Personalizamos los ficheros y ejecutamos la app
+
+	$ moss
+
+	Moss manages your servers so you can focus on coding
+
+	Thanks to Moss you and your team can devote most of your time to the things
+	that really matter to you, including getting new customers, developing
+	applications, solving bugs, and introducing new features. Meanwhile,
+	Moss takes care of provisioning and monitoring your servers and sites,
+	deploying your applications, and notifying you about the state of your systems.
+
+	Usage:
+	  moss [command]
+
+	Available Commands:
+	  login       Grant this app access to Moss
+
+	Flags:
+	      --config string   config file (default is $HOME/.moss.yaml)
+	  -t, --toggle          Help message for toggle
+
+	Use "moss [command] --help" for more information about a command.
+
+
+
+* Comandos: generación automática (iv)
+
+- Ejecución de la ayuda el comando *login*
+
+	$ moss login --help
+
+	This command will allow the app to access Moss on behalf of you.
+
+	You must run this command to setup the app before executing any other
+	command.
+
+	Usage:
+	  moss login [flags]
+
+	Global Flags:
+	      --config string   config file (default is $HOME/.moss.yaml)
+
+- Ejecución del comando *login*
+
+	$ moss login
+
+	login command invoked
+
+
+
+* Tipos de flags
+
+Según longitud:
+
+- Cortos
+
+	app -h -i
+
+- Largos
+
+	app --help --interactive
+
+Según tipo de dato:
+
+- strings
+- bools
+- ints
+- floats
+- etc.
+
+
+
+* Añadir un nuevo flag (largo)
+
+.code code/login_2.go /START OMIT/,/END OMIT/
+
+
+* Añadir un nuevo flag (corto y largo)
+
+.code code/login_3.go /START OMIT/,/END OMIT/
+
+
+
+* Resultado de añadir los flags
+
+	moss login --help
+
+	This command will allow the app to access Moss on behalf of you.
+
+	You must run this command to setup the app before executing any other
+	command.
+
+	Usage:
+	  moss login [flags]
+
+	Flags:
+	  -p, --password string   The password
+	  -u, --user string       The username to login with
+
+	Global Flags:
+	      --config string   config file (default is $HOME/.moss.yaml)
+
+
+
+* Ejecución del comando usando flags
+
+- Con flags cortos
+
+	$ moss login -u myuser -p s3cre3t
+
+	Trying to log user myuser with password s3cre3t
+
+- Con flags largos
+
+	$ moss login --user myuser --password s3cre3t
+
+	Trying to log user myuser with password s3cre3t
+
+
+
+* Sugerencias
+
+- Ejecución del comando *logn* (_typo_)
+
+	$ moss logn
+
+	Error: unknown command "logn" for "moss"
+
+	Did you mean this?
+		login
+
+	Run 'moss --help' for usage.
+	unknown command "logn" for "moss"
+
+	Did you mean this?
+		login
+
+
+
+* Algunos proyectos que usan Cobra (i)
+
+.image img/hugo.png 200 _
+
+Generador de sitios web estáticos
+
+- Crear una nueva web
+
+	hugo new site myblog
+
+- Añadir un artículo a una web
+
+	hugo new post/moss-reaches-one-million-users.md
+
+
+
+* Algunos proyectos que usan Cobra (ii)
+
+.image img/kubernetes.png 250 _
+
+
+Orquestación de contenedores
+
+- Obtener la lista de nodos (hosts) en un cluster
+
+	kubectl get nodes
+
+- Obtener la lista de pods (grupos de contenedores) en un cluster
+
+	kubectl get pods
+
+
+* Algunos proyectos que usan Cobra (iii)
+
+.image img/etcd.png 180 _
+
+Base de datos clave/valor distribuida
+
+- Guardar un nuevo valor en la base de datos
+	
+	etcdctl put moss "rocks"
+
+- Recuperar el valor de la base de datos
+
+	etcdctl get moss
